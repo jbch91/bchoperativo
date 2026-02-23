@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE } from '../../shared/api-base';
 
 export interface CashTransaction {
   id: string;
@@ -22,7 +23,7 @@ export interface CashSummary {
 
 @Injectable({ providedIn: 'root' })
 export class CajaService {
-  private readonly apiBase = 'http://localhost:5050';
+  private readonly apiBase = API_BASE;
 
   constructor(private readonly http: HttpClient) {}
 

@@ -1,0 +1,6 @@
+node_modules
+dist
+.angular
+.git
+.DS_Store
+server/node_modules

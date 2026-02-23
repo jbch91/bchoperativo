@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientContextService } from '../client-context.service';
 import { AuthService } from '../../auth/auth.service';
+import { API_BASE } from '../api-base';
 
 @Component({
   selector: 'app-client-bar',
@@ -36,6 +37,6 @@ export class ClientBarComponent {
     const client = this.selectedClientInfo;
     if (!client?.logoPath) return null;
     if (client.logoPath.startsWith('http')) return client.logoPath;
-    return `http://localhost:5050${client.logoPath}`;
+    return `${API_BASE}${client.logoPath}`;
   }
 }

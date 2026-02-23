@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE } from '../../shared/api-base';
 
 export interface InventoryProduct {
   id: string;
@@ -45,7 +46,7 @@ export interface InventorySummaryItem {
 
 @Injectable({ providedIn: 'root' })
 export class InventoryProductsService {
-  private readonly apiBase = 'http://localhost:5050';
+  private readonly apiBase = API_BASE;
 
   constructor(private readonly http: HttpClient) {}
 

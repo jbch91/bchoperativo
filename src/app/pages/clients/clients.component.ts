@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../admin/admin.service';
+import { API_BASE } from '../../shared/api-base';
 
 interface ClientView {
   id: string;
@@ -24,7 +25,7 @@ interface ClientView {
   styleUrl: './clients.component.scss'
 })
 export class ClientsComponent implements OnInit {
-  private readonly apiBase = 'http://localhost:5050';
+  private readonly apiBase = API_BASE;
   clients: ClientView[] = [];
   modules: { key: string; name: string; description?: string | null }[] = [];
   clientModules: Record<string, Set<string>> = {};

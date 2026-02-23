@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bchoperativo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bchsoft
+      POSTGRES_USER: superbiomedical
+      POSTGRES_PASSWORD: "jbc9107//"
+    volumes:
+      - bchoperativo-db:/var/lib/postgresql/data
+      - ./server/sql:/docker-entrypoint-initdb.d:ro
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: bchoperativo-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: bchsoft
+      DB_USER: superbiomedical
+      DB_PASSWORD: "jbc9107//"
+      JWT_SECRET: dev_only_change_me
+      JWT_REFRESH_SECRET: dev_only_change_me_too
+      TOKEN_TTL: 15m
+      REFRESH_TTL: 7d
+      PORT: "5050"
+    ports:
+      - "5050:5050"
+    volumes:
+      - bchoperativo-uploads:/app/uploads
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bchoperativo-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  bchoperativo-db:
+  bchoperativo-uploads:

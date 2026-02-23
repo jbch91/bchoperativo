@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Role } from '../auth/models';
+import { API_BASE } from '../shared/api-base';
 
 interface RoleDto {
   id: number;
@@ -75,7 +76,7 @@ interface LocationDto {
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private readonly apiBase = 'http://localhost:5050';
+  private readonly apiBase = API_BASE;
 
   constructor(private readonly http: HttpClient) {}
 

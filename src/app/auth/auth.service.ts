@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { LoginResult, Permission, Role, User } from './models';
+import { API_BASE } from '../shared/api-base';
 
 interface LoginResponse {
   user: {
@@ -21,7 +22,7 @@ export class AuthService {
   private readonly storageKey = 'auth_user_v1';
   private readonly tokenKey = 'auth_tokens_v1';
   private readonly modulesKey = 'auth_modules_v1';
-  private readonly apiBase = 'http://localhost:5050';
+  private readonly apiBase = API_BASE;
 
   readonly currentUser = signal<User | null>(this.loadStoredUser());
   readonly tokens = signal<{ accessToken: string; refreshToken: string } | null>(

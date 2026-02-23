@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE } from '../../shared/api-base';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,7 +14,7 @@ import { firstValueFrom } from 'rxjs';
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {
-  private readonly apiBase = 'http://localhost:5050';
+  private readonly apiBase = API_BASE;
   enabledModules: Set<string> | null = null;
   clientInfo: { name: string; nit: string; city: string; address?: string | null; email: string; logo_path?: string | null } | null = null;
   private loadingClientInfo = false;
