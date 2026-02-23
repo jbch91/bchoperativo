@@ -1,0 +1,176 @@
+.page {
+  padding: 32px 24px;
+  display: grid;
+  gap: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+header .header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+header .back {
+  text-decoration: none;
+  background: #ffffff;
+  border: 1px solid #cbd5f5;
+  color: #0f172a;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+header button {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 16px;
+}
+
+.list-card {
+  margin-top: 16px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.list-actions label {
+  min-width: 220px;
+}
+
+.table {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 120px 1.4fr 1fr 1fr 220px;
+  gap: 12px;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.06);
+  font-size: 13px;
+}
+
+.row.header {
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions .ghost {
+  background: transparent;
+  border: 1px solid #cbd5f5;
+  color: #0f172a;
+}
+
+.actions .danger {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.row input {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+  font-size: 12px;
+  width: 100%;
+}
+
+.bulk-upload {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed #cbd5f5;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.model-link {
+  color: #0f172a;
+  font-weight: 600;
+  text-decoration: underline;
+  width: fit-content;
+}
+
+.bulk-upload h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.success {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+select,
+input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5f5;
+}
+
+.error {
+  color: #dc2626;
+  font-weight: 600;
+}

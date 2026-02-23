@@ -1,0 +1,306 @@
+.page {
+  padding: 32px 24px;
+  display: grid;
+  gap: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+header .header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+header .back {
+  text-decoration: none;
+  background: #ffffff;
+  border: 1px solid #cbd5f5;
+  color: #0f172a;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 12px;
+}
+
+.filters {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: end;
+}
+
+.filters .span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .filters .span-2 {
+    grid-column: span 1;
+  }
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+select,
+input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5f5;
+}
+
+.row input {
+  width: 100%;
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid #cbd5f5;
+  color: #0f172a;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sell {
+  background: #f59e0b;
+  color: #0f172a;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sell.nav {
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
+.table {
+  display: grid;
+  gap: 8px;
+}
+
+.table-card {
+  overflow-x: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 110px 1.4fr 120px 120px 90px 120px 100px 120px 120px;
+  gap: 12px;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.06);
+  font-size: 13px;
+  min-width: 900px;
+}
+
+.service-table .row {
+  grid-template-columns: 90px 140px 2fr 90px 120px 100px 120px 120px;
+  min-width: 920px;
+}
+
+.donation-table .row {
+  grid-template-columns: 90px 120px 1.2fr 140px 130px 90px 120px;
+  min-width: 820px;
+}
+
+.donation-table .row.header {
+  grid-template-columns: 90px 120px 1.2fr 140px 130px 90px 120px;
+}
+
+.consumption-table .row {
+  grid-template-columns: 90px 120px 1.2fr 140px 130px 90px 120px;
+  min-width: 760px;
+}
+
+.donation-preview .row {
+  grid-template-columns: 90px 120px 1.2fr 140px 130px 90px;
+  min-width: 720px;
+}
+
+.consumption-preview .row {
+  grid-template-columns: 90px 120px 1.2fr 140px 130px 90px;
+  min-width: 700px;
+}
+
+.table-card h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.table-card h3 + .table .row {
+  align-items: center;
+}
+
+.table-card h3 + .table .row.header {
+  margin-top: 8px;
+}
+
+.row span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.row span input {
+  width: 100%;
+}
+
+.row small {
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.row span:has(.stacked-value) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.row.header {
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions .danger {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.totals {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.warning {
+  color: #b45309;
+  font-weight: 600;
+}
+
+small {
+  color: #64748b;
+}
+
+.invoice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.invoice-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  width: min(960px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+  display: grid;
+  gap: 16px;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.invoice-meta {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.invoice-totals {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.invoice-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  padding: 10px 12px;
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .row {
+    font-size: 12px;
+    gap: 10px;
+    grid-template-columns: 90px 1.2fr 100px 110px 70px 110px 90px 110px 100px;
+  }
+}
+
+@media (max-width: 900px) {
+  .row {
+    font-size: 11px;
+    padding: 10px;
+    grid-template-columns: 90px 1.1fr 90px 100px 70px 100px 80px 100px 90px;
+  }
+}
+
+@media (max-width: 700px) {
+  .row {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .row.header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+}

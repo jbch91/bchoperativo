@@ -1,0 +1,2 @@
+ALTER TABLE sale_lines
+  ALTER COLUMN entry_id DROP NOT NULL;

@@ -1,0 +1,141 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Remisiones</h1>
+      <p>Envía productos a hospitales y clientes.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/dashboard">Regresar</button>
+      <button type="button" class="sell nav" routerLink="/remisiones/historial">Historial</button>
+      <button type="button" class="sell nav" routerLink="/remisiones/clientes">Clientes</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="filters">
+      <label>
+        Número remisión
+        <input type="text" [(ngModel)]="remisionNumber" placeholder="REM-001" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+      </label>
+      <label>
+        Cliente destino
+        <select [(ngModel)]="remisionClientId" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))">
+          <option value="">Selecciona...</option>
+          <option *ngFor="let client of clients" [value]="client.id">{{ client.name }}</option>
+        </select>
+      </label>
+      <label>
+        Dirigido a
+        <input type="text" [(ngModel)]="recipient" placeholder="Persona o área" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+      </label>
+      <label>
+        Dirección
+        <input type="text" [(ngModel)]="destination" placeholder="Dirección de entrega" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+      </label>
+      <label>
+        Observaciones
+        <input type="text" [(ngModel)]="notes" placeholder="Notas" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filters product-filters">
+      <label>
+        Buscar producto
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Código, artículo, lote..." [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+      </label>
+      <div class="product-row">
+        <label class="product-select">
+          Producto
+          <select [(ngModel)]="selectedEntryId" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))">
+            <option value="">Selecciona...</option>
+            <option *ngFor="let item of filteredEntries" [value]="item.id">
+              {{ item.code }} - {{ item.articulo }} | Lote {{ item.lote }} | Vence {{ item.fecha_vencimiento | date: 'MM/dd/yyyy' }}
+            </option>
+          </select>
+        </label>
+        <label class="product-qty">
+          Cantidad
+          <input type="number" min="1" [max]="selectedEntry?.cantidad || null" [(ngModel)]="cantidad" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+          <small *ngIf="selectedEntry">Disponible: {{ selectedEntry.cantidad }}</small>
+        </label>
+        <button type="button" class="ghost add-btn" *ngIf="auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage')" (click)="addLine()">Agregar</button>
+      </div>
+    </div>
+    <p class="warning" *ngIf="warningMessage">{{ warningMessage }}</p>
+  </div>
+
+  <div class="card table-card">
+    <div class="table">
+      <div class="row header">
+        <span>Código</span>
+        <span>Artículo</span>
+        <span>Lote</span>
+        <span>Vencimiento</span>
+        <span>Cantidad</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let line of lines; let i = index">
+        <span>{{ line.code }}</span>
+        <span>{{ line.name }}</span>
+        <span>{{ line.lote }}</span>
+        <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+        <span>
+          <input type="number" min="1" [max]="line.maxQty" [(ngModel)]="line.cantidad" (ngModelChange)="updateQuantity(line)" [disabled]="!(auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage'))" />
+        </span>
+        <span class="actions">
+          <button type="button" class="danger" *ngIf="auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage')" (click)="removeLine(i)">Quitar</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card actions-card">
+    <button type="button" class="sell" *ngIf="auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage')" (click)="openPreview()" [disabled]="saving || lines.length === 0">Guardar remisión</button>
+  </div>
+
+  <div class="invoice-overlay" *ngIf="showPreview">
+    <div class="invoice-modal">
+      <div class="invoice-header">
+        <div>
+          <h2>Remisión</h2>
+          <p>Vista previa</p>
+        </div>
+        <button type="button" class="ghost" (click)="closePreview()">Cancelar</button>
+      </div>
+
+      <div class="invoice-meta">
+        <div><strong>Fecha:</strong> {{ previewDate | date: 'MM/dd/yyyy HH:mm' }}</div>
+        <div><strong>Número:</strong> {{ remisionNumber }}</div>
+        <div><strong>Cliente:</strong> {{ selectedClientName }}</div>
+        <div *ngIf="recipient"><strong>Dirigido a:</strong> {{ recipient }}</div>
+        <div *ngIf="destination"><strong>Destino:</strong> {{ destination }}</div>
+        <div *ngIf="notes"><strong>Notas:</strong> {{ notes }}</div>
+      </div>
+
+      <div class="table details-table">
+        <div class="row header">
+          <span>Código</span>
+          <span>Artículo</span>
+          <span>Lote</span>
+          <span>Vencimiento</span>
+          <span>Cantidad</span>
+        </div>
+        <div class="row" *ngFor="let line of lines">
+          <span>{{ line.code }}</span>
+          <span>{{ line.name }}</span>
+          <span>{{ line.lote }}</span>
+          <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+          <span>{{ line.cantidad }}</span>
+        </div>
+      </div>
+
+      <div class="invoice-actions">
+        <button type="button" class="ghost" (click)="closePreview()">Cancelar</button>
+        <button type="button" class="sell" *ngIf="auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage')" (click)="confirmSave(false)" [disabled]="saving">Guardar</button>
+        <button type="button" class="sell" *ngIf="auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage')" (click)="confirmSave(true)" [disabled]="saving">Guardar e imprimir</button>
+      </div>
+    </div>
+  </div>
+</section>

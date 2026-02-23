@@ -1,0 +1,84 @@
+<section class="dashboard">
+  <header>
+    <div class="header-left">
+      <div class="client-inline" *ngIf="clientInfo">
+        <div class="client-info">
+          <strong>{{ clientInfo.name }}</strong>
+          <span>NIT: {{ clientInfo.nit }}</span>
+          <span>Ciudad: {{ clientInfo.city }}</span>
+          <span *ngIf="clientInfo.address">Dirección: {{ clientInfo.address }}</span>
+          <span>Correo: {{ clientInfo.email }}</span>
+        </div>
+        <div class="client-logo" *ngIf="clientLogoUrl()">
+          <img [src]="clientLogoUrl()!" alt="Logo cliente" />
+        </div>
+      </div>
+      <p>Bienvenido, {{ auth.currentUser()?.displayName }}</p>
+    </div>
+    <button (click)="auth.logout()" routerLink="/login">Salir</button>
+  </header>
+
+  <div class="cards">
+    <a
+      routerLink="/clientes"
+      class="card"
+      *ngIf="auth.hasRole('superuser') && canShow('clientes')"
+    >
+      <h2>Clientes</h2>
+      <p>Ver y administrar la base de clientes.</p>
+    </a>
+    <a
+      routerLink="/usuarios"
+      class="card"
+      *ngIf="auth.hasRole('superuser') && canShow('usuarios')"
+    >
+      <h2>Usuarios</h2>
+      <p>Crear y administrar cuentas.</p>
+    </a>
+
+    <a
+      routerLink="/auditoria"
+      class="card"
+      *ngIf="auth.hasPermission('users:manage') && canShow('auditoria')"
+    >
+      <h2>Auditoría</h2>
+      <p>Historial de cambios del sistema.</p>
+    </a>
+
+    <a
+      routerLink="/inventario"
+      class="card"
+      *ngIf="(auth.hasPermission('inventory:view') || auth.hasPermission('inventory:manage') || auth.hasPermission('read:all')) && canShow('inventario')"
+    >
+      <h2>Inventario</h2>
+      <p>Productos y consumibles registrados.</p>
+    </a>
+
+    <a
+      routerLink="/ventas"
+      class="card"
+      *ngIf="(auth.hasPermission('sales:view') || auth.hasPermission('inventory:manage') || auth.hasPermission('read:all')) && canShow('ventas')"
+    >
+      <h2>Ventas</h2>
+      <p>Factura rápida de productos.</p>
+    </a>
+
+    <a
+      routerLink="/caja"
+      class="card"
+      *ngIf="(auth.hasPermission('cash:view') || auth.hasPermission('cash:manage') || auth.hasPermission('read:all')) && canShow('caja')"
+    >
+      <h2>Caja</h2>
+      <p>Ingresos, egresos y saldo disponible.</p>
+    </a>
+
+    <a
+      routerLink="/remisiones"
+      class="card"
+      *ngIf="(auth.hasPermission('remisiones:view') || auth.hasPermission('remisiones:manage') || auth.hasPermission('read:all')) && canShow('remisiones')"
+    >
+      <h2>Remisiones</h2>
+      <p>Despachos de inventario a clientes.</p>
+    </a>
+  </div>
+</section>

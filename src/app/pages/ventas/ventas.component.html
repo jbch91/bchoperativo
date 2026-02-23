@@ -1,0 +1,422 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Ventas (POS)</h1>
+      <p>Factura rápida de productos.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/dashboard">Regresar</button>
+      <button type="button" class="sell nav" routerLink="/ventas/historial">Ver ventas</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="filters">
+      <label>
+        Nombre comprador (opcional)
+        <input type="text" [(ngModel)]="buyerName" placeholder="Nombre persona/empresa" />
+      </label>
+      <label>
+        Cédula o NIT (opcional)
+        <input type="text" [(ngModel)]="buyerDocument" placeholder="Documento" />
+      </label>
+      <label>
+        Dirección (opcional)
+        <input type="text" [(ngModel)]="buyerAddress" placeholder="Dirección de entrega" />
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="filters">
+      <label>
+        Tipo de venta
+        <select [(ngModel)]="saleType" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))">
+          <option value="producto">Producto</option>
+          <option value="servicio">Servicio</option>
+          <option value="donacion">Donación</option>
+          <option value="consumo">Consumo</option>
+        </select>
+      </label>
+      <label *ngIf="saleType === 'servicio'">
+        Tipo de servicio
+        <select [(ngModel)]="serviceType" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))">
+          <option value="calibraciones">Calibraciones</option>
+          <option value="mantenimientos">Mantenimientos</option>
+        </select>
+      </label>
+      <label *ngIf="saleType === 'servicio'">
+        Descripción
+        <input type="text" [(ngModel)]="serviceDescription" placeholder="Detalle del servicio" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))" />
+      </label>
+      <label *ngIf="saleType === 'servicio'">
+        IVA servicio
+        <select [(ngModel)]="serviceIvaRate" disabled>
+          <option [ngValue]="0.19">19%</option>
+        </select>
+      </label>
+      <label *ngIf="saleType === 'producto' || saleType === 'servicio'">
+        Método de pago
+        <select [(ngModel)]="paymentMethod" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))">
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="otro">Otro</option>
+        </select>
+      </label>
+      <label *ngIf="saleType === 'consumo'">
+        Área de consumo
+        <input type="text" [(ngModel)]="consumptionArea" placeholder="Área responsable" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))" />
+      </label>
+      <label *ngIf="saleType === 'consumo'">
+        Observación
+        <input type="text" [(ngModel)]="consumptionNote" placeholder="Observación" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))" />
+      </label>
+      <label *ngIf="saleType !== 'servicio'">
+        Buscar producto
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Código, artículo, lote..." [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))" />
+      </label>
+      <label class="span-2" *ngIf="saleType !== 'servicio'">
+        Producto
+        <select [(ngModel)]="selectedEntryId" [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))">
+          <option value="">Selecciona...</option>
+          <option *ngFor="let item of filteredEntries" [value]="item.id">
+            {{ item.code }} - {{ item.articulo }} | Lote {{ item.lote }} | Vence {{ item.fecha_vencimiento | date: 'MM/dd/yyyy' }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Cantidad
+        <input
+          type="number"
+          min="1"
+          [max]="selectedEntry?.cantidad || null"
+          [(ngModel)]="cantidad"
+          [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+        />
+        <small *ngIf="selectedEntry && saleType !== 'servicio'">Disponible: {{ selectedEntry.cantidad }}</small>
+      </label>
+      <button type="button" class="ghost" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="addLine()">Agregar</button>
+    </div>
+    <p class="warning" *ngIf="warningMessage">{{ warningMessage }}</p>
+  </div>
+
+  <div class="card table-card" *ngIf="productLines.length">
+    <h3>Productos</h3>
+    <div class="table">
+      <div class="row header">
+        <span>Tipo</span>
+        <span>Código</span>
+        <span>Nombre</span>
+        <span>Lote</span>
+        <span>Vencimiento</span>
+        <span>Cantidad</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let line of productLines; let i = index">
+        <span>{{ line.type }}</span>
+        <span>{{ line.code }}</span>
+        <span>{{ line.name }}</span>
+        <span>{{ line.lote }}</span>
+        <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+        <span>
+          <input
+            type="number"
+            min="1"
+            [max]="line.maxQty || null"
+            [ngModel]="line.cantidad"
+            (ngModelChange)="line.cantidad = $event; updateLineQuantity(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+        </span>
+        <span>
+          <input
+            type="number"
+            min="0"
+            [ngModel]="line.unitario"
+            (ngModelChange)="line.unitario = $event; updateLineUnitario(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+          <small class="stacked-value">{{ line.unitario | currency: 'COP':'symbol-narrow':'1.2-2' }}</small>
+        </span>
+        <span>{{ line.iva | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+        <span>
+          <input
+            type="number"
+            [ngModel]="line.total"
+            (ngModelChange)="line.total = $event; updateLineTotal(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+          <small class="stacked-value">{{ line.total | currency: 'COP':'symbol-narrow':'1.2-2' }}</small>
+        </span>
+        <span class="actions">
+          <button type="button" class="danger" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="removeLine(lines.indexOf(line))">Quitar</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card table-card" *ngIf="serviceLines.length">
+    <h3>Servicios</h3>
+    <div class="table service-table">
+      <div class="row header">
+        <span>Tipo</span>
+        <span>Servicio</span>
+        <span>Descripción</span>
+        <span>Cantidad</span>
+        <span>Valor unitario</span>
+        <span>IVA</span>
+        <span>Total</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let line of serviceLines">
+        <span>{{ line.type }}</span>
+        <span>{{ line.name }}</span>
+        <span>
+          <input
+            type="text"
+            [ngModel]="line.lote"
+            (ngModelChange)="line.lote = $event"
+            placeholder="Descripción"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+        </span>
+        <span>
+          <input
+            type="number"
+            min="1"
+            [ngModel]="line.cantidad"
+            (ngModelChange)="line.cantidad = $event; updateLineQuantity(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+        </span>
+        <span>
+          <input
+            type="number"
+            min="0"
+            [ngModel]="line.unitario"
+            (ngModelChange)="line.unitario = $event; updateLineUnitario(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+          <small class="stacked-value">{{ line.unitario | currency: 'COP':'symbol-narrow':'1.2-2' }}</small>
+        </span>
+        <span>{{ line.iva | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+        <span>
+          <input
+            type="number"
+            [ngModel]="line.total"
+            (ngModelChange)="line.total = $event; updateLineTotal(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+          <small class="stacked-value">{{ line.total | currency: 'COP':'symbol-narrow':'1.2-2' }}</small>
+        </span>
+        <span class="actions">
+          <button type="button" class="danger" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="removeLine(lines.indexOf(line))">Quitar</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card table-card" *ngIf="donationLines.length">
+    <h3>Donaciones</h3>
+    <div class="table donation-table">
+      <div class="row header">
+        <span>Tipo</span>
+        <span>Código</span>
+        <span>Nombre</span>
+        <span>Lote</span>
+        <span>Vencimiento</span>
+        <span>Cantidad</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let line of donationLines">
+        <span>{{ line.type }}</span>
+        <span>{{ line.code }}</span>
+        <span>{{ line.name }}</span>
+        <span>{{ line.lote }}</span>
+        <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+        <span>
+          <input
+            type="number"
+            min="1"
+            [max]="line.maxQty || null"
+            [ngModel]="line.cantidad"
+            (ngModelChange)="line.cantidad = $event; updateLineQuantity(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+        </span>
+        <span class="actions">
+          <button type="button" class="danger" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="removeLine(lines.indexOf(line))">Quitar</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card table-card" *ngIf="consumptionLines.length">
+    <h3>Consumos</h3>
+    <div class="table consumption-table">
+      <div class="row header">
+        <span>Tipo</span>
+        <span>Código</span>
+        <span>Nombre</span>
+        <span>Lote</span>
+        <span>Vencimiento</span>
+        <span>Cantidad</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let line of consumptionLines">
+        <span>{{ line.type }}</span>
+        <span>{{ line.code }}</span>
+        <span>{{ line.name }}</span>
+        <span>{{ line.lote }}</span>
+        <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+        <span>
+          <input
+            type="number"
+            min="1"
+            [max]="line.maxQty || null"
+            [ngModel]="line.cantidad"
+            (ngModelChange)="line.cantidad = $event; updateLineQuantity(line)"
+            [disabled]="!(auth.hasPermission('sales:create') || auth.hasPermission('sales:manage'))"
+          />
+        </span>
+        <span class="actions">
+          <button type="button" class="danger" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="removeLine(lines.indexOf(line))">Quitar</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card totals">
+    <div><strong>Total base:</strong> {{ totalBase | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+    <div><strong>Total IVA:</strong> {{ totalIva | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+    <div><strong>Total:</strong> {{ totalGeneral | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+    <button
+      type="button"
+      class="sell"
+      *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')"
+      (click)="openInvoicePreview()"
+      [disabled]="selling || lines.length === 0"
+    >{{ actionLabel }}</button>
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <p class="warning" *ngIf="warningMessage">{{ warningMessage }}</p>
+    <div class="invoice-warning" *ngIf="previewWarnings.length">
+      <p *ngFor="let warn of previewWarnings">{{ warn }}</p>
+    </div>
+  </div>
+
+  <div class="invoice-overlay" *ngIf="showInvoicePreview">
+    <div class="invoice-modal">
+      <div class="invoice-header">
+        <div>
+          <h2>Vista previa factura</h2>
+          <p>Revisa antes de vender</p>
+        </div>
+        <button type="button" class="ghost" (click)="closeInvoicePreview()">Regresar a editar</button>
+      </div>
+      <div class="invoice-meta">
+        <div><strong>Fecha:</strong> {{ previewDate | date: 'MM/dd/yyyy HH:mm' }}</div>
+        <div><strong>Cliente:</strong> {{ clientContext.selectedClientInfo?.name || 'N/A' }}</div>
+        <div><strong>NIT:</strong> {{ clientContext.selectedClientInfo?.nit || 'N/A' }}</div>
+        <div *ngIf="buyerName"><strong>Comprador:</strong> {{ buyerName }}</div>
+        <div *ngIf="buyerDocument"><strong>Documento:</strong> {{ buyerDocument }}</div>
+        <div *ngIf="buyerAddress"><strong>Dirección:</strong> {{ buyerAddress }}</div>
+        <div *ngIf="consumptionArea"><strong>Area consumo:</strong> {{ consumptionArea }}</div>
+        <div *ngIf="consumptionNote"><strong>Observacion:</strong> {{ consumptionNote }}</div>
+      </div>
+      <div class="invoice-warning" *ngIf="previewWarnings.length">
+        <p *ngFor="let warn of previewWarnings">{{ warn }}</p>
+      </div>
+      <div class="table" *ngIf="productLines.length">
+        <div class="row header">
+          <span>Tipo</span>
+          <span>Código</span>
+          <span>Nombre</span>
+          <span>Lote</span>
+          <span>Vencimiento</span>
+          <span>Cantidad</span>
+          <span>Unitario</span>
+          <span>IVA</span>
+          <span>Total</span>
+        </div>
+        <div class="row" *ngFor="let line of productLines">
+          <span>{{ line.type }}</span>
+          <span>{{ line.code }}</span>
+          <span>{{ line.name }}</span>
+          <span>{{ line.lote }}</span>
+          <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+          <span>{{ line.cantidad }}</span>
+          <span>{{ line.unitario | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+          <span>{{ line.iva | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+          <span>{{ line.total | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="table" *ngIf="serviceLines.length">
+        <div class="row header">
+          <span>Tipo</span>
+          <span>Servicio</span>
+          <span>Descripción</span>
+          <span>Cantidad</span>
+          <span>Unitario</span>
+          <span>IVA</span>
+          <span>Total</span>
+        </div>
+        <div class="row" *ngFor="let line of serviceLines">
+          <span>{{ line.type }}</span>
+          <span>{{ line.name }}</span>
+          <span>{{ line.lote }}</span>
+          <span>{{ line.cantidad }}</span>
+          <span>{{ line.unitario | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+          <span>{{ line.iva | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+          <span>{{ line.total | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="table donation-preview" *ngIf="donationLines.length">
+        <div class="row header">
+          <span>Tipo</span>
+          <span>Código</span>
+          <span>Nombre</span>
+          <span>Lote</span>
+          <span>Vencimiento</span>
+          <span>Cantidad</span>
+        </div>
+        <div class="row" *ngFor="let line of donationLines">
+          <span>{{ line.type }}</span>
+          <span>{{ line.code }}</span>
+          <span>{{ line.name }}</span>
+          <span>{{ line.lote }}</span>
+          <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+          <span>{{ line.cantidad }}</span>
+        </div>
+      </div>
+      <div class="table consumption-preview" *ngIf="consumptionLines.length">
+        <div class="row header">
+          <span>Tipo</span>
+          <span>Código</span>
+          <span>Nombre</span>
+          <span>Lote</span>
+          <span>Vencimiento</span>
+          <span>Cantidad</span>
+        </div>
+        <div class="row" *ngFor="let line of consumptionLines">
+          <span>{{ line.type }}</span>
+          <span>{{ line.code }}</span>
+          <span>{{ line.name }}</span>
+          <span>{{ line.lote }}</span>
+          <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+          <span>{{ line.cantidad }}</span>
+        </div>
+      </div>
+      <div class="invoice-totals">
+        <div><strong>Total base:</strong> {{ totalBase | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+        <div><strong>Total IVA:</strong> {{ totalIva | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+        <div><strong>Total:</strong> {{ totalGeneral | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+      </div>
+      <div class="invoice-actions">
+        <button type="button" class="sell" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="confirmSale(false)" [disabled]="selling || hasBlockingWarnings">{{ actionLabel }}</button>
+        <button type="button" class="sell" *ngIf="auth.hasPermission('sales:create') || auth.hasPermission('sales:manage')" (click)="confirmSale(true)" [disabled]="selling || hasBlockingWarnings">{{ actionLabel }} e imprimir</button>
+        <button type="button" class="ghost" (click)="closeInvoicePreview()">Regresar a editar</button>
+      </div>
+      <p class="warning" *ngIf="hasBlockingWarnings">Corrige las cantidades para continuar.</p>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,48 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Clientes de remisión</h1>
+      <p>Listado de clientes recurrentes.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/remisiones">Volver</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h3>Agregar cliente</h3>
+    <div class="filters">
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="name" />
+      </label>
+      <label>
+        Dirección
+        <input type="text" [(ngModel)]="address" />
+      </label>
+      <label>
+        Contacto
+        <input type="text" [(ngModel)]="contact" />
+      </label>
+      <button type="button" class="sell" *ngIf="auth.hasPermission('remisiones:create') || auth.hasPermission('remisiones:manage')" (click)="createClient()">Guardar</button>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <div class="table">
+      <div class="row header">
+        <span>Nombre</span>
+        <span>Dirección</span>
+        <span>Contacto</span>
+      </div>
+      <div class="row" *ngFor="let client of clients">
+        <span>{{ client.name }}</span>
+        <span>{{ client.address || '—' }}</span>
+        <span>{{ client.contact || '—' }}</span>
+      </div>
+      <div class="row" *ngIf="!loading && clients.length === 0">
+        <span>No hay clientes registrados.</span>
+      </div>
+    </div>
+  </div>
+</section>

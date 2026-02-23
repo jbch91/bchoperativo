@@ -1,0 +1,152 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Historial de remisiones</h1>
+      <p>Consulta y edita remisiones registradas.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/remisiones">Nueva remisión</button>
+      <button type="button" class="sell nav" routerLink="/remisiones/clientes">Clientes</button>
+    </div>
+  </header>
+
+  <div class="card" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="card">
+    <div class="filters">
+      <label>
+        Buscar remisión
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Número, destinatario, notas..." />
+      </label>
+      <label>
+        Cliente
+        <select [(ngModel)]="clientFilter">
+          <option value="">Todos</option>
+          <option *ngFor="let client of clients" [value]="client.id">{{ client.name }}</option>
+        </select>
+      </label>
+      <label>
+        Fecha desde
+        <input type="date" [(ngModel)]="startDate" />
+      </label>
+      <label>
+        Fecha hasta
+        <input type="date" [(ngModel)]="endDate" />
+      </label>
+      <button type="button" class="ghost" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <div class="table">
+      <div class="row header">
+        <span>Fecha</span>
+        <span>No.</span>
+        <span>Cliente</span>
+        <span>Dirigido a</span>
+        <span>Destino</span>
+        <span>Notas</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let remision of filteredRemisiones">
+        <span>{{ remision.created_at | date: 'MM/dd/yyyy' }}</span>
+        <span>{{ remision.remision_number }}</span>
+        <span>{{ remision.client_name || '—' }}</span>
+        <span>{{ remision.recipient || '—' }}</span>
+        <span>{{ remision.destination || '—' }}</span>
+        <span>{{ remision.notes || '—' }}</span>
+        <span class="actions">
+          <button type="button" class="ghost" (click)="openPreview(remision)">Ver</button>
+          <button type="button" class="sell" *ngIf="canManage" (click)="openEdit(remision)">Editar</button>
+          <button type="button" class="danger" *ngIf="canDelete" (click)="deleteRemision(remision)">Eliminar</button>
+        </span>
+      </div>
+      <div class="row" *ngIf="!loading && filteredRemisiones.length === 0">
+        <span>No hay remisiones registradas.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="invoice-overlay" *ngIf="showPreview">
+    <div class="invoice-modal">
+      <div class="invoice-header">
+        <div>
+          <h2>Remisión</h2>
+          <p *ngIf="previewRemision">Remisión {{ previewRemision.remision_number }}</p>
+        </div>
+        <button type="button" class="ghost" (click)="closeModal()">Cerrar</button>
+      </div>
+
+      <div class="invoice-meta" *ngIf="previewRemision">
+        <div><strong>Fecha:</strong> {{ previewRemision.created_at | date: 'MM/dd/yyyy HH:mm' }}</div>
+        <div><strong>Cliente:</strong> {{ previewRemision.client_name || '—' }}</div>
+        <div><strong>Dirigido a:</strong> {{ previewRemision.recipient || '—' }}</div>
+        <div><strong>Destino:</strong> {{ previewRemision.destination || '—' }}</div>
+        <div><strong>Notas:</strong> {{ previewRemision.notes || '—' }}</div>
+      </div>
+
+      <div class="edit-fields" *ngIf="showEdit">
+        <label>
+          Número remisión
+          <input type="text" [(ngModel)]="remisionNumber" />
+        </label>
+        <label>
+          Cliente destino
+          <select [(ngModel)]="remisionClientId">
+            <option value="">Selecciona...</option>
+            <option *ngFor="let client of clients" [value]="client.id">{{ client.name }}</option>
+          </select>
+        </label>
+        <label>
+          Dirigido a
+          <input type="text" [(ngModel)]="recipient" />
+        </label>
+        <label>
+          Destino
+          <input type="text" [(ngModel)]="destination" />
+        </label>
+        <label class="span-2">
+          Notas
+          <input type="text" [(ngModel)]="notes" />
+        </label>
+      </div>
+
+      <div class="invoice-warning" *ngIf="warningMessage">{{ warningMessage }}</div>
+
+      <div class="table details-table">
+        <div class="row header">
+          <span>Código</span>
+          <span>Artículo</span>
+          <span>Lote</span>
+          <span>Vencimiento</span>
+          <span>Cantidad</span>
+        </div>
+        <div class="row" *ngFor="let line of previewLines">
+          <span>{{ line.code }}</span>
+          <span>{{ line.name }}</span>
+          <span>{{ line.lote }}</span>
+          <span>{{ line.vencimiento | date: 'MM/dd/yyyy' }}</span>
+          <span>
+            <ng-container *ngIf="showEdit; else qtyReadonly">
+              <input
+                type="number"
+                min="1"
+                [max]="line.maxQty || null"
+                [ngModel]="line.cantidad"
+                (ngModelChange)="line.cantidad = $event; updateLineQuantity(line)"
+              />
+              <small>Max: {{ line.maxQty }}</small>
+            </ng-container>
+            <ng-template #qtyReadonly>
+              {{ line.cantidad }}
+            </ng-template>
+          </span>
+        </div>
+      </div>
+
+      <div class="invoice-actions" *ngIf="showEdit">
+        <button type="button" class="sell" (click)="saveEdit()" [disabled]="saving">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</section>

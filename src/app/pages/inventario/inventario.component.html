@@ -1,0 +1,197 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Inventario de productos</h1>
+      <p>Listado consolidado por artículo.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/dashboard">Regresar</button>
+      <button type="button" class="ghost" *ngIf="auth.hasPermission('inventory:create') || auth.hasPermission('inventory:manage')" (click)="goCreateProduct()">Crear producto</button>
+      <button type="button" class="ghost" *ngIf="auth.hasPermission('inventory:create') || auth.hasPermission('inventory:manage')" (click)="goCreateEntry()">Ingresar producto</button>
+      <button (click)="loadItems()" [disabled]="loading">Recargar</button>
+    </div>
+  </header>
+
+  <div class="card filters-card">
+    <div class="filters-grid">
+      <label>
+        Búsqueda
+        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" placeholder="Código, artículo, marca..." />
+      </label>
+      <label>
+        Exportar como
+        <select [(ngModel)]="exportFormat">
+          <option value="xlsx">Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+          <option value="pdf">PDF (.pdf)</option>
+        </select>
+      </label>
+      <button type="button" class="ghost" (click)="clearFilters()">Limpiar</button>
+      <button type="button" class="ghost" (click)="exportInventory(true)">Exportar filtrado</button>
+      <button type="button" class="ghost" (click)="exportInventory(false)">Exportar todo</button>
+    </div>
+
+    <div class="filter-summary">
+      <span>Mostrando {{ filteredCount }} de {{ totalCount }} productos</span>
+      <div class="filter-chips" *ngIf="activeFilters.length">
+        <button
+          type="button"
+          class="chip"
+          *ngFor="let filter of activeFilters"
+          (click)="clearFilter(filter.key)"
+        >
+          {{ filter.label }} ✕
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="loading">Cargando...</p>
+  <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="card table-card" *ngIf="!loading">
+    <div class="totals-summary">
+      <div><strong>Costo base total:</strong> {{ inventoryTotals.base | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+      <div><strong>IVA total:</strong> {{ inventoryTotals.iva | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+      <div><strong>Costo total:</strong> {{ inventoryTotals.total | currency: 'COP':'symbol-narrow':'1.2-2' }}</div>
+    </div>
+    <div class="table">
+      <div class="row header">
+        <span>Código</span>
+        <span>Artículo</span>
+        <span>Presentación</span>
+        <span>Marca</span>
+        <span>Cantidad total</span>
+        <span>Acciones</span>
+      </div>
+      <ng-container *ngFor="let item of pagedProducts">
+        <div class="row">
+          <span data-label="Código">{{ item.code }}</span>
+          <span data-label="Artículo">{{ item.articulo }}</span>
+          <span data-label="Presentación">{{ item.presentacion }}</span>
+          <span data-label="Marca">{{ item.marca }}</span>
+          <span data-label="Cantidad">{{ item.total_cantidad }}</span>
+          <span class="actions">
+            <button type="button" (click)="toggleEntries(item.id)">
+              {{ expandedProductId === item.id ? 'Ocultar ingresos' : 'Ver ingresos' }}
+            </button>
+          </span>
+        </div>
+        <div class="subtable" *ngIf="expandedProductId === item.id">
+          <div class="subrow header" [class.with-sales]="auth.hasRole('superuser')">
+            <span>Costo base</span>
+            <span>IVA</span>
+            <span>Valor IVA</span>
+            <span>Costo con IVA</span>
+            <span *ngIf="auth.hasRole('superuser')">Precio venta</span>
+            <span *ngIf="auth.hasRole('superuser')">Factor</span>
+            <span>Vencimiento</span>
+            <span>Lote</span>
+            <span>Invima</span>
+            <span>Cantidad</span>
+            <span>Ingreso</span>
+            <span>Acciones</span>
+          </div>
+          <div class="subrow" [class.with-sales]="auth.hasRole('superuser')" *ngFor="let entry of entriesByProduct[item.id] || []">
+            <span data-label="Costo">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editCosto">
+                {{ entry.costo_base ?? entry.costo }}
+              </ng-container>
+              <ng-template #editCosto>
+                <input type="number" [(ngModel)]="editEntry.costoBase" (input)="recalculateEditIva()" />
+              </ng-template>
+            </span>
+            <span data-label="IVA">
+              {{ (editingEntryId === entry.id ? editEntry.ivaTipo : entry.iva_tipo) || 'gravado' }}
+            </span>
+            <span data-label="Valor IVA">
+              {{ editingEntryId === entry.id ? editEntry.ivaValor : (entry.iva_valor ?? (entry.costo_total ? (entry.costo_total - (entry.costo_base ?? 0)) : 0)) }}
+            </span>
+            <span data-label="Costo con IVA">
+              {{ editingEntryId === entry.id ? editEntry.costoTotal : (entry.costo_total ?? entry.costo) }}
+            </span>
+            <span data-label="Precio venta" *ngIf="auth.hasRole('superuser')">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editVenta">
+                {{ entry.precio_venta ?? 0 }}
+              </ng-container>
+              <ng-template #editVenta>
+                <input type="number" [(ngModel)]="editEntry.precioVenta" />
+              </ng-template>
+            </span>
+            <span data-label="Factor" *ngIf="auth.hasRole('superuser')">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editFactor">
+                {{ entry.venta_factor ?? 0.5 }}
+              </ng-container>
+              <ng-template #editFactor>
+                <select [(ngModel)]="editEntry.ventaFactor" (change)="recalculateEditVenta()">
+                  <option value="0.1">0.1</option>
+                  <option value="0.2">0.2</option>
+                  <option value="0.3">0.3</option>
+                  <option value="0.4">0.4</option>
+                  <option value="0.5">0.5</option>
+                  <option value="0.6">0.6</option>
+                  <option value="0.7">0.7</option>
+                  <option value="0.8">0.8</option>
+                  <option value="0.9">0.9</option>
+                </select>
+              </ng-template>
+            </span>
+            <span data-label="Vencimiento">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editVenc">
+                {{ entry.fecha_vencimiento | date: 'MM/dd/yyyy' }}
+              </ng-container>
+              <ng-template #editVenc>
+                <input type="date" [(ngModel)]="editEntry.fechaVencimiento" />
+              </ng-template>
+            </span>
+            <span data-label="Lote">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editLote">
+                {{ entry.lote }}
+              </ng-container>
+              <ng-template #editLote>
+                <input type="text" [(ngModel)]="editEntry.lote" />
+              </ng-template>
+            </span>
+            <span data-label="Invima">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editInvima">
+                {{ entry.invima }}
+              </ng-container>
+              <ng-template #editInvima>
+                <input type="text" [(ngModel)]="editEntry.invima" />
+              </ng-template>
+            </span>
+            <span data-label="Cantidad">
+              <ng-container *ngIf="editingEntryId !== entry.id; else editCantidad">
+                {{ entry.cantidad }}
+              </ng-container>
+              <ng-template #editCantidad>
+                <input type="number" [(ngModel)]="editEntry.cantidad" />
+              </ng-template>
+            </span>
+            <span data-label="Ingreso">{{ entry.created_at | date: 'MM/dd/yyyy' }}</span>
+            <span class="actions" *ngIf="auth.hasPermission('inventory:edit') || auth.hasPermission('inventory:delete') || auth.hasPermission('inventory:manage')">
+              <button type="button" class="ghost" *ngIf="editingEntryId !== entry.id && (auth.hasPermission('inventory:edit') || auth.hasPermission('inventory:manage'))" (click)="startEditEntry(entry)">
+                Editar
+              </button>
+              <button type="button" class="ghost" *ngIf="editingEntryId === entry.id && (auth.hasPermission('inventory:edit') || auth.hasPermission('inventory:manage'))" (click)="saveEditEntry(entry)">
+                Guardar
+              </button>
+              <button type="button" class="ghost" *ngIf="editingEntryId === entry.id && (auth.hasPermission('inventory:edit') || auth.hasPermission('inventory:manage'))" (click)="cancelEditEntry()">
+                Cancelar
+              </button>
+              <button type="button" class="danger" *ngIf="auth.hasPermission('inventory:delete') || auth.hasPermission('inventory:manage')" (click)="deleteEntry(entry)">Eliminar</button>
+            </span>
+          </div>
+          <p class="muted" *ngIf="(entriesByProduct[item.id] || []).length === 0">
+            Sin ingresos registrados para este producto.
+          </p>
+        </div>
+      </ng-container>
+    </div>
+    <div class="pagination">
+      <button type="button" class="ghost" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Anterior</button>
+      <span>Página {{ currentPage }} de {{ totalPages }}</span>
+      <button type="button" class="ghost" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">Siguiente</button>
+    </div>
+  </div>
+</section>

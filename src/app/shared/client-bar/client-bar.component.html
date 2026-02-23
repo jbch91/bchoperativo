@@ -1,0 +1,32 @@
+<section class="client-bar" *ngIf="clientContext.clients().length">
+  <div class="client-bar-main">
+    <div class="client-controls" *ngIf="auth.hasRole('superuser')">
+      <label>
+        Buscar cliente
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Escribe para filtrar..." />
+      </label>
+      <label>
+        Cliente
+        <select
+          [ngModel]="clientContext.selectedClientId()"
+          (ngModelChange)="clientContext.setSelectedClient($event)"
+        >
+          <option *ngFor="let client of filteredClients" [value]="client.id">
+            {{ client.name }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="client-preview" *ngIf="selectedClientInfo">
+      <div class="client-preview-info">
+        <div><strong>{{ selectedClientInfo.name }}</strong></div>
+        <div *ngIf="selectedClientInfo.nit">NIT: {{ selectedClientInfo.nit }}</div>
+        <div *ngIf="selectedClientInfo.city">Ciudad: {{ selectedClientInfo.city }}</div>
+        <div *ngIf="selectedClientInfo.address">Dirección: {{ selectedClientInfo.address }}</div>
+        <div *ngIf="selectedClientInfo.email">Correo: {{ selectedClientInfo.email }}</div>
+      </div>
+      <img *ngIf="clientLogoUrl()" [src]="clientLogoUrl()!" alt="Logo cliente" />
+    </div>
+  </div>
+</section>

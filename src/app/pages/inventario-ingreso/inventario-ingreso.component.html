@@ -1,0 +1,114 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Ingresar producto</h1>
+      <p>Registra un ingreso con costo, lote y vencimiento.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/inventario">Regresar</button>
+      <button
+        type="button"
+        *ngIf="auth.hasPermission('inventory:create') || auth.hasPermission('inventory:manage')"
+        (click)="onSubmit()"
+        [disabled]="loading"
+      >Guardar</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <p class="muted" *ngIf="!clientContext.selectedClientId()">
+      Selecciona un cliente en la barra superior para cargar productos.
+    </p>
+    <p class="muted" *ngIf="clientContext.selectedClientId() && products.length === 0">
+      No hay productos base. Crea productos primero en “Crear producto”.
+    </p>
+    <div class="form-grid two-col">
+      <label>
+        Buscar artículo
+        <input type="text" [(ngModel)]="productSearch" placeholder="Código, artículo, marca..." />
+      </label>
+
+      <label>
+        Artículo
+        <select [(ngModel)]="selectedProductId">
+          <option value="">Selecciona...</option>
+          <option *ngFor="let product of filteredProducts" [value]="product.id">
+            {{ product.code }} - {{ product.articulo }} ({{ product.presentacion }} | {{ product.marca }})
+          </option>
+        </select>
+      </label>
+      <div class="helper">
+        <span>Productos cargados: {{ products.length }}</span>
+        <button type="button" class="ghost" (click)="loadProducts()">Recargar</button>
+      </div>
+
+      <label>
+        Costo base (antes de IVA)
+        <input type="number" min="0" [(ngModel)]="costoBase" (input)="recalculateIva()" required />
+      </label>
+
+      <label>
+        IVA
+        <select [(ngModel)]="ivaTipo" (change)="recalculateIva()">
+          <option value="gravado">Gravado (19%)</option>
+          <option value="excluido">Excluido (0%)</option>
+          <option value="exento">Exento (0%)</option>
+        </select>
+      </label>
+
+      <label>
+        Valor IVA
+        <input type="number" [(ngModel)]="ivaValor" readonly />
+      </label>
+
+      <label>
+        Costo con IVA
+        <input type="number" [(ngModel)]="costoTotal" readonly />
+      </label>
+
+      <ng-container *ngIf="auth.hasRole('superuser')">
+        <label>
+          Precio de venta
+          <input type="number" [(ngModel)]="precioVenta" />
+        </label>
+
+        <label>
+          Factor venta
+          <select [(ngModel)]="ventaFactor" (change)="recalculateVenta()">
+            <option value="0.1">0.1</option>
+            <option value="0.2">0.2</option>
+            <option value="0.3">0.3</option>
+            <option value="0.4">0.4</option>
+            <option value="0.5">0.5</option>
+            <option value="0.6">0.6</option>
+            <option value="0.7">0.7</option>
+            <option value="0.8">0.8</option>
+            <option value="0.9">0.9</option>
+          </select>
+        </label>
+      </ng-container>
+
+      <label>
+        Fecha de vencimiento
+        <input type="date" [(ngModel)]="fechaVencimiento" required />
+      </label>
+
+      <label>
+        Lote
+        <input type="text" [(ngModel)]="lote" required />
+      </label>
+
+      <label>
+        Invima
+        <input type="text" [(ngModel)]="invima" required />
+      </label>
+
+      <label>
+        Cantidad
+        <input type="number" min="0" [(ngModel)]="cantidad" required />
+      </label>
+    </div>
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+</section>

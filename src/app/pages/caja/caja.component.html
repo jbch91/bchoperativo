@@ -1,0 +1,247 @@
+<section class="page">
+  <header>
+    <div>
+      <h1>Caja</h1>
+      <p>Control de ingresos y egresos de efectivo.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="back" routerLink="/dashboard">Regresar</button>
+      <button type="button" class="sell nav" routerLink="/ventas">Ventas POS</button>
+      <button type="button" class="sell nav" routerLink="/ventas/historial">Historial ventas</button>
+    </div>
+  </header>
+
+  <div class="subnav">
+    <button type="button" class="tab" [class.active]="activeSection === 'resumen'" (click)="activeSection = 'resumen'">Resumen</button>
+    <button type="button" class="tab" [class.active]="activeSection === 'movimientos'" (click)="activeSection = 'movimientos'">Movimientos</button>
+    <button type="button" class="tab" [class.active]="activeSection === 'reportes'" (click)="activeSection = 'reportes'">Reportes</button>
+    <button type="button" class="tab" [class.active]="activeSection === 'corte'" (click)="activeSection = 'corte'">Corte</button>
+  </div>
+
+  <div id="resumen" class="card summary-card" *ngIf="activeSection === 'resumen'">
+    <div class="summary-item">
+      <span>Saldo actual</span>
+      <strong>{{ summary.balance | currency: 'COP':'symbol-narrow':'1.2-2' }}</strong>
+    </div>
+    <div class="summary-item">
+      <span>Ingresos totales</span>
+      <strong>{{ summary.totalIn | currency: 'COP':'symbol-narrow':'1.2-2' }}</strong>
+    </div>
+    <div class="summary-item">
+      <span>Egresos totales</span>
+      <strong>{{ summary.totalOut | currency: 'COP':'symbol-narrow':'1.2-2' }}</strong>
+    </div>
+    <div class="summary-item">
+      <span>Ingresos filtrados</span>
+      <strong>{{ filteredTotals.in | currency: 'COP':'symbol-narrow':'1.2-2' }}</strong>
+    </div>
+    <div class="summary-item">
+      <span>Egresos filtrados</span>
+      <strong>{{ filteredTotals.out | currency: 'COP':'symbol-narrow':'1.2-2' }}</strong>
+    </div>
+    <div class="summary-item">
+      <span>Alerta saldo</span>
+      <input type="number" [(ngModel)]="lowBalanceThreshold" min="0" [disabled]="!(auth.hasPermission('cash:edit') || auth.hasPermission('cash:manage'))" />
+    </div>
+  </div>
+
+  <div class="card warning-card" *ngIf="isLowBalance && activeSection === 'resumen'">
+    El saldo de caja está por debajo del mínimo configurado.
+  </div>
+
+  <div class="card" *ngIf="canOpen && activeSection === 'resumen'">
+    <h3>Saldo inicial</h3>
+    <div class="filters">
+      <label>
+        Monto inicial
+        <input type="number" [(ngModel)]="openingAmount" min="0" [disabled]="!(auth.hasPermission('cash:create') || auth.hasPermission('cash:manage'))" />
+      </label>
+      <label>
+        Nota (opcional)
+        <input type="text" [(ngModel)]="openingNote" placeholder="Observación" [disabled]="!(auth.hasPermission('cash:create') || auth.hasPermission('cash:manage'))" />
+      </label>
+      <button type="button" class="sell" *ngIf="auth.hasPermission('cash:create') || auth.hasPermission('cash:manage')" (click)="createOpening()">Registrar apertura</button>
+    </div>
+  </div>
+
+  <div class="card filters-card" *ngIf="activeSection === 'movimientos'">
+    <div class="filters">
+      <label>
+        Buscar
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Categoría o descripción" />
+      </label>
+      <label>
+        Tipo
+        <select [(ngModel)]="typeFilter">
+          <option value="all">Todos</option>
+          <option value="in">Ingresos</option>
+          <option value="out">Egresos</option>
+        </select>
+      </label>
+      <label>
+        Desde
+        <input type="date" [(ngModel)]="dateFrom" />
+      </label>
+      <label>
+        Hasta
+        <input type="date" [(ngModel)]="dateTo" />
+      </label>
+      <button type="button" class="ghost" (click)="applyFilters()">Aplicar</button>
+      <button type="button" class="ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </div>
+
+  <div id="movimientos" class="card" *ngIf="activeSection === 'movimientos'">
+    <h3>Registrar movimiento</h3>
+    <div class="filters">
+      <label>
+        Tipo
+        <select [(ngModel)]="movementType" [disabled]="!(auth.hasPermission('cash:create') || auth.hasPermission('cash:manage'))">
+          <option value="out">Egreso</option>
+          <option value="in">Ingreso</option>
+        </select>
+      </label>
+      <label>
+        Categoría
+        <select [(ngModel)]="movementCategory" [disabled]="!(auth.hasPermission('cash:create') || auth.hasPermission('cash:manage'))">
+          <option value="Repuestos">Repuestos</option>
+          <option value="Parqueadero">Parqueadero</option>
+          <option value="Transporte de mercancía">Transporte de mercancía</option>
+          <option value="Descargue de mercancía">Descargue de mercancía</option>
+          <option value="Pago de pedidos">Pago de pedidos</option>
+          <option value="Otros">Otros</option>
+          <option value="Ingreso manual">Ingreso manual</option>
+        </select>
+      </label>
+      <label>
+        Monto
+        <input type="number" [(ngModel)]="movementAmount" min="0" [disabled]="!(auth.hasPermission('cash:create') || auth.hasPermission('cash:manage'))" />
+      </label>
+      <label>
+        Descripción
+        <input type="text" [(ngModel)]="movementDescription" placeholder="Detalle" [disabled]="!(auth.hasPermission('cash:create') || auth.hasPermission('cash:manage'))" />
+      </label>
+      <button type="button" class="ghost" *ngIf="auth.hasPermission('cash:create') || auth.hasPermission('cash:manage')" (click)="createMovement()">Registrar</button>
+    </div>
+  </div>
+
+  <div id="reportes" class="card" *ngIf="activeSection === 'reportes'">
+    <div class="filters">
+      <label>
+        Reporte
+        <select [(ngModel)]="reportMode">
+          <option value="daily">Diario</option>
+          <option value="monthly">Mensual</option>
+        </select>
+      </label>
+      <label>
+        Formato
+        <select [(ngModel)]="reportExportFormat">
+          <option value="xls">Excel</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </label>
+      <button type="button" class="sell" (click)="exportReport()">Exportar reporte</button>
+    </div>
+    <div class="table report-table" *ngIf="reportRows.length">
+      <div class="row header">
+        <span>{{ reportMode === 'daily' ? 'Fecha' : 'Mes' }}</span>
+        <span>Ingresos</span>
+        <span>Egresos</span>
+        <span>Saldo</span>
+      </div>
+      <div class="row" *ngFor="let row of reportRows">
+        <span>{{ row.period }}</span>
+        <span>{{ row.totalIn | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+        <span>{{ row.totalOut | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+        <span>{{ row.balance | currency: 'COP':'symbol-narrow':'1.2-2' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="loading && activeSection === 'movimientos'">Cargando...</p>
+  <p class="error" *ngIf="errorMessage && activeSection === 'movimientos'">{{ errorMessage }}</p>
+
+  <div class="card table-card" *ngIf="!loading && activeSection === 'movimientos'">
+    <div class="table">
+      <div class="row header">
+        <span>Fecha</span>
+        <span>Tipo</span>
+        <span>Categoría</span>
+        <span>Monto</span>
+        <span>Descripción</span>
+        <span>Origen</span>
+        <span>Acciones</span>
+      </div>
+      <div class="row" *ngFor="let item of pagedTransactions">
+        <span>{{ item.created_at | date: 'MM/dd/yyyy HH:mm' }}</span>
+        <span>
+          <ng-container *ngIf="editingId !== item.id; else editType">
+            {{ item.type === 'in' ? 'Ingreso' : 'Egreso' }}
+          </ng-container>
+          <ng-template #editType>
+            <select [(ngModel)]="editMovement.type">
+              <option value="in">Ingreso</option>
+              <option value="out">Egreso</option>
+            </select>
+          </ng-template>
+        </span>
+        <span>
+          <ng-container *ngIf="editingId !== item.id; else editCategory">
+            {{ item.category }}
+          </ng-container>
+          <ng-template #editCategory>
+            <input type="text" [(ngModel)]="editMovement.category" />
+          </ng-template>
+        </span>
+        <span>
+          <ng-container *ngIf="editingId !== item.id; else editAmount">
+            {{ item.amount | currency: 'COP':'symbol-narrow':'1.2-2' }}
+          </ng-container>
+          <ng-template #editAmount>
+            <input type="number" [(ngModel)]="editMovement.amount" min="0" />
+          </ng-template>
+        </span>
+        <span>
+          <ng-container *ngIf="editingId !== item.id; else editDescription">
+            {{ item.description || '—' }}
+          </ng-container>
+          <ng-template #editDescription>
+            <input type="text" [(ngModel)]="editMovement.description" />
+          </ng-template>
+        </span>
+        <span>{{ item.source }}</span>
+        <span class="actions">
+          <button type="button" class="ghost" *ngIf="item.source === 'sale'" (click)="goToSale(item)">Ver POS</button>
+          <button type="button" class="ghost" *ngIf="editingId !== item.id && (auth.hasPermission('cash:edit') || auth.hasPermission('cash:manage'))" (click)="startEdit(item)" [disabled]="item.source === 'sale' || (item.source === 'opening' && !canOpen)">Editar</button>
+          <button type="button" class="ghost" *ngIf="editingId === item.id && (auth.hasPermission('cash:edit') || auth.hasPermission('cash:manage'))" (click)="saveEdit(item)">Guardar</button>
+          <button type="button" class="ghost" *ngIf="editingId === item.id && (auth.hasPermission('cash:edit') || auth.hasPermission('cash:manage'))" (click)="cancelEdit()">Cancelar</button>
+          <button type="button" class="danger" *ngIf="auth.hasPermission('cash:delete') || auth.hasPermission('cash:manage')" (click)="deleteMovement(item)" [disabled]="item.source === 'sale' || (item.source === 'opening' && !canOpen)">Eliminar</button>
+        </span>
+      </div>
+      <div class="row" *ngIf="pagedTransactions.length === 0">
+        <span>No hay movimientos.</span>
+      </div>
+    </div>
+    <div class="pagination">
+      <button type="button" class="ghost" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">Anterior</button>
+      <span>Página {{ currentPage }} de {{ totalPages }}</span>
+      <button type="button" class="ghost" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">Siguiente</button>
+    </div>
+  </div>
+
+  <div id="corte" class="card" *ngIf="activeSection === 'corte'">
+    <h3>Corte de caja</h3>
+    <div class="filters">
+      <label>
+        Responsable
+        <input type="text" [(ngModel)]="closingName" placeholder="Nombre" [disabled]="!(auth.hasPermission('cash:view') || auth.hasPermission('cash:manage'))" />
+      </label>
+      <label>
+        Nota
+        <input type="text" [(ngModel)]="closingNote" placeholder="Observación" [disabled]="!(auth.hasPermission('cash:view') || auth.hasPermission('cash:manage'))" />
+      </label>
+      <button type="button" class="sell" (click)="closeShift()">Imprimir corte</button>
+    </div>
+  </div>
+</section>
