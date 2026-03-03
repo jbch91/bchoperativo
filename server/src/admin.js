@@ -112,6 +112,19 @@ export async function updateUserModules(userId, moduleKeys) {
       [userId, key]
     );
   }
+
+  // Ensure client-level modules are enabled when user modules are set.
+  const { rows: userRows } = await query('SELECT client_id FROM users WHERE id = $1', [userId]);
+  const clientId = userRows[0]?.client_id || null;
+  if (!clientId) {
+    return;
+  }
+  for (const key of moduleKeys) {
+    await query(
+      'INSERT INTO client_modules (client_id, module_key, enabled) VALUES ($1, $2, TRUE) ON CONFLICT (client_id, module_key) DO UPDATE SET enabled = TRUE',
+      [clientId, key]
+    );
+  }
 }
 
 export async function getRolePermissions(roleId) {
