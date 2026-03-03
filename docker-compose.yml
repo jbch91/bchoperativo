@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: "jbc9107//"
     volumes:
       - bchoperativo-db:/var/lib/postgresql/data
-      - ./server/sql:/docker-entrypoint-initdb.d:ro
+      - ./server/sql:/sql:ro
+      - ./server/sql/init:/docker-entrypoint-initdb.d:ro
 
   backend:
     build:
@@ -28,6 +29,7 @@ services:
       TOKEN_TTL: 15m
       REFRESH_TTL: 7d
       PORT: "5050"
+      CORS_ALLOW_ALL: "true"
     ports:
       - "5050:5050"
     volumes:
