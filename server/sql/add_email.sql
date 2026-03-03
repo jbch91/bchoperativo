@@ -6,6 +6,7 @@ BEGIN
     WHERE table_name = 'users'
   ) THEN
     EXECUTE 'ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT UNIQUE';
+    EXECUTE 'UPDATE users SET email = CONCAT(username, ''@example.com'') WHERE email IS NULL';
   END IF;
 END $$;
 
