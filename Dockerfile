@@ -6,7 +6,7 @@ COPY package*.json ./
 RUN npm install --no-audit --no-fund
 
 COPY . .
-RUN npm run build
+RUN npm run build -- --configuration development
 
 RUN mkdir -p /dist-out && \
     if [ -d dist/bchoperativo/browser ]; then \
