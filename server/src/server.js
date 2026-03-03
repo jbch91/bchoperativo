@@ -148,6 +148,7 @@ import { createCashTransaction, deleteCashTransaction, getCashSummary, getCashTr
 dotenv.config();
 
 const app = express();
+const allowAllOrigins = String(process.env.CORS_ALLOW_ALL || '').toLowerCase() === 'true';
 const allowedOrigins = new Set([
   'http://localhost:4200',
   'http://localhost:4201',
@@ -156,6 +157,9 @@ const allowedOrigins = new Set([
 app.use(
   cors({
     origin(origin, callback) {
+      if (allowAllOrigins) {
+        return callback(null, true);
+      }
       if (!origin || allowedOrigins.has(origin)) {
         return callback(null, true);
       }
