@@ -142,8 +142,8 @@ export class InventoryProductsService {
     costoBase: number;
     ivaValor: number;
     costoTotal: number;
-    ventaFactor: number;
-    precioVenta: number;
+    ventaFactor?: number;
+    precioVenta?: number;
     fechaVencimiento: string;
     lote: string;
     invima: string;

@@ -252,19 +252,34 @@ export class InventarioComponent {
     const clientId = this.clientContext.selectedClientId();
     if (!clientId) return;
     this.recalculateEditIva();
-    await this.products.updateEntry(clientId, entry.id, {
+    const payload: {
+      costo: number;
+      ivaTipo: string;
+      costoBase: number;
+      ivaValor: number;
+      costoTotal: number;
+      fechaVencimiento: string;
+      lote: string;
+      invima: string;
+      cantidad: number;
+      ventaFactor?: number;
+      precioVenta?: number;
+    } = {
       costo: Number(this.editEntry.costoTotal) || 0,
       ivaTipo: this.editEntry.ivaTipo,
       costoBase: Number(this.editEntry.costoBase) || 0,
       ivaValor: Number(this.editEntry.ivaValor) || 0,
       costoTotal: Number(this.editEntry.costoTotal) || 0,
-      ventaFactor: this.auth.hasRole('superuser') ? (Number(this.editEntry.ventaFactor) || 0.5) : 0.5,
-      precioVenta: this.auth.hasRole('superuser') ? (Number(this.editEntry.precioVenta) || 0) : 0,
       fechaVencimiento: this.editEntry.fechaVencimiento,
       lote: this.editEntry.lote,
       invima: this.editEntry.invima,
       cantidad: Number(this.editEntry.cantidad) || 0
-    });
+    };
+    if (this.auth.hasRole('superuser')) {
+      payload.ventaFactor = Number(this.editEntry.ventaFactor) || 0.5;
+      payload.precioVenta = Number(this.editEntry.precioVenta) || 0;
+    }
+    await this.products.updateEntry(clientId, entry.id, payload);
     this.editingEntryId = null;
     await this.loadItems();
   }
