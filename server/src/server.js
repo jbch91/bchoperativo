@@ -527,23 +527,24 @@ app.patch(
     const normalizedIva = ['gravado','excluido','exento'].includes(String(ivaTipo || '').toLowerCase())
       ? String(ivaTipo).toLowerCase()
       : 'gravado';
-    if ((ventaFactor !== undefined || precioVenta !== undefined) && !req.user.roles?.includes('superuser')) {
-      return res.status(403).json({ message: 'Solo superuser puede editar precio de venta.' });
-    }
+    const isSuperuser = req.user.roles?.includes('superuser');
     const normalizedVentaFactor = Number(ventaFactor) || 0.5;
-    await updateInventoryEntry(clientId, id, {
+    const updatePayload = {
       costo: Number(costo) || 0,
       ivaTipo: normalizedIva,
       costoBase: Number(costoBase) || 0,
       ivaValor: Number(ivaValor) || 0,
       costoTotal: Number(costoTotal) || 0,
-      ventaFactor: normalizedVentaFactor,
-      precioVenta: Number(precioVenta) || 0,
       fechaVencimiento,
       lote,
       invima,
       cantidad: Number(cantidad) || 0
-    });
+    };
+    if (isSuperuser) {
+      updatePayload.ventaFactor = normalizedVentaFactor;
+      updatePayload.precioVenta = Number(precioVenta) || 0;
+    }
+    await updateInventoryEntry(clientId, id, updatePayload);
     return res.json({ ok: true });
   }
 );
